@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { config } = require('dotenv');
+const dotenv = require('dotenv');
+
+dotenv.config({ path: './config.env' });
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -37,13 +39,17 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.method.createJWT = function () {
+userSchema.methods.createJWT = function () {
   // generate otken to authorize the user
-  const token = jwt.sign(
+  return jwt.sign(
     { userId: this._id, name: this.name },
-    config.env.JWT_SECRET,
-    config.env.JWT_EXPIRES,
+    process.env.JWT_SECRET,
+    process.env.JWT_EXPIRES,
   );
+};
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
